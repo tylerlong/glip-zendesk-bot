@@ -1,4 +1,6 @@
 const dotenv = require('dotenv')
+const axios = require('axios')
+const striptags = require('striptags')
 
 dotenv.config()
 
@@ -19,7 +21,16 @@ client.on('message', (type, data) => {
     userId = data.members.filter(m => m !== botId)[0]
     groupId = data._id
     console.log(`New conversation started in group ${groupId}`)
-    client.post(groupId, 'Welcome to Glip!') // todo: send an article from zendesk
+    axios.request({
+      url: `https://glip.zendesk.com/api/v2/help_center/en-us/articles/${process.env.ZENDESK_ARTICLE_ID}.json`,
+      method: 'get',
+      auth: {
+        username: process.env.ZENDESK_USERNAME,
+        password: process.env.ZENDESK_PASSWORD
+      }
+    }).then(r => {
+      client.post(groupId, striptags(r.data.article.body))
+    })
     setTimeout(() => {
       client.post(groupId, 'Please post something!')
       waiting = true
