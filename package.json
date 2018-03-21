@@ -1,10 +1,18 @@
 {
+  "name": "glip-zendesk-bot",
+  "version": "0.1.0",
+  "private": true,
+  "license": "All right reserved",
+  "scripts": {
+    "test": "node index.js",
+    "upgrade": "yarn-upgrade-all && yarn remove glip.socket.io && cp -r ../glip.socket.io node_modules/"
+  },
   "devDependencies": {
     "standard": "^11.0.1",
     "yarn-upgrade-all": "^0.3.0"
   },
   "dependencies": {
-    "glip.socket.io": "tylerlong/glip.socket.io",
+    "dotenv": "^5.0.1",
     "node-zendesk": "^1.2.1"
   }
 }
