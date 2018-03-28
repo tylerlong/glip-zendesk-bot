@@ -145,7 +145,7 @@ client.on('message', (type, data) => {
           R.take(2),
           R.map(a => `* [${a.questions[0]}](${R.last(a.answer.split(/\s+/g))})`)
         )(r.data.answers)
-        client.post(groupId, `I find the following article from my knowledge base:
+        client.post(groupId, `I find the following article(s) from my knowledge base:
 
 ${answers.join('\n')}
 `)
