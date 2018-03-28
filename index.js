@@ -4,9 +4,9 @@ const striptags = require('striptags')
 
 dotenv.config()
 
+const db = {}
+
 const botId = parseInt(process.env.GLIP_USER_ID)
-let userId
-let groupId
 
 const GlipSocket = require('glip.socket.io')
 const client = new GlipSocket({
@@ -16,7 +16,13 @@ const client = new GlipSocket({
   password: process.env.GLIP_PASSWORD
 })
 
-const postWelcomeMessage = () => {
+if (process.env.DEBUG === '1') {
+  client.on('message', (type, data) => {
+    console.log(type, data)
+  })
+}
+
+const postWelcomeMessage = (userId) => {
   axios.request({
     url: `https://glip.zendesk.com/api/v2/help_center/en-us/articles/${process.env.ZENDESK_ARTICLE_ID}.json`,
     method: 'get',
@@ -25,11 +31,11 @@ const postWelcomeMessage = () => {
       password: process.env.ZENDESK_PASSWORD
     }
   }).then(r => {
-    client.post(groupId, striptags(r.data.article.body))
+    client.post(db[userId].groupId, striptags(r.data.article.body))
   })
 }
 
-const likeUserPost = (postId, postText) => {
+const likeUserPost = (userId, postId, postText) => {
   client.request(
     `/api/post/${postId}`,
     'PUT',
@@ -41,14 +47,14 @@ const likeUserPost = (postId, postText) => {
       ]
     },
     (error, data) => {
-      console.warn(error)
-      console.log(JSON.stringify(data, null, 2))
-      client.post(groupId, ':smiley:')
+      if (error != null) { console.warn(error) }
+      client.post(db[userId].groupId, ':smiley:')
     }
   )
 }
 
-const createSampleTask = () => {
+const createSampleTask = (userId) => {
+  const groupId = db[userId].groupId
   client.request(
     '/api/task',
     'POST',
@@ -63,44 +69,47 @@ const createSampleTask = () => {
       'due': null
     },
     (error, data) => {
-      console.warn(error)
-      console.log(JSON.stringify(data, null, 2))
+      if (error != null) { console.warn(error) }
       client.post(groupId, 'I created a sample task for you, please tick the checkbox to mark it as complete')
     }
   )
 }
 
-let waitingForFirstPost = false
-let waitingForCompleteTask = false
-let finishedFirstTimeWizard = false
 const firstTimeLicenser = (type, data) => {
   if (type === 2 && data.members.length === 2) { // first time add the bot
-    userId = data.members.filter(m => m !== botId)[0]
-    groupId = data._id
-    postWelcomeMessage()
+    const userId = data.members.filter(m => m !== botId)[0]
+    db[userId] = {
+      groupId: data._id,
+      waitingForFirstPost: false,
+      waitingForCompleteTask: false,
+      finishedFirstTimeWizard: false
+    }
+    postWelcomeMessage(userId)
     setTimeout(() => {
-      client.post(groupId, 'Please post something!')
-      waitingForFirstPost = true
+      client.post(db[userId].groupId, 'Please post something!')
+      db[userId].waitingForFirstPost = true
     }, 5000)
   }
-  if (waitingForFirstPost && type === 4 && data.creator_id !== botId) {
-    waitingForFirstPost = false
+  if (type === 4 && db[data.creator_id] && db[data.creator_id].waitingForFirstPost) {
+    const userId = data.creator_id
+    db[userId].waitingForFirstPost = false
     const postId = data._id
     const postText = data.text
-    likeUserPost(postId, postText)
+    likeUserPost(userId, postId, postText)
     setTimeout(() => {
-      createSampleTask()
-      waitingForCompleteTask = true
+      createSampleTask(userId)
+      db[userId].waitingForCompleteTask = true
     }, 5000)
   }
-  if (waitingForCompleteTask && type === 4 && data.text === '' && data.activity_data && data.activity_data.value === 1) {
-    client.post(groupId, 'Well done!')
-    waitingForCompleteTask = false
+  if (type === 4 && db[data.creator_id] && db[data.creator_id].waitingForCompleteTask && data.text === '' && data.activity_data && data.activity_data.value === 1) {
+    const userId = data.creator_id
+    client.post(db[userId].groupId, 'Well done!')
+    db[userId].waitingForCompleteTask = false
     setTimeout(() => {
-      client.post(groupId, 'You can upload files/images, like this:')
-      client.post_file_from_url(groupId, process.env.SAMPLE_FILE_URL, 'Hey, look at this cool icon!')
+      client.post(db[userId].groupId, 'You can upload files/images, like this:')
+      client.post_file_from_url(db[userId].groupId, process.env.SAMPLE_FILE_URL, 'Hey, look at this cool icon!')
       client.removeListener('message', firstTimeLicenser)
-      finishedFirstTimeWizard = true
+      db[userId].finishedFirstTimeWizard = true
     }, 5000)
   }
 }
@@ -109,7 +118,15 @@ client.on('message', firstTimeLicenser)
 
 // Microsoft QnA Maker
 client.on('message', (type, data) => {
-  if (finishedFirstTimeWizard && type === 4 && data.text.trim() !== '' && data.text.trim().endsWith('?')) {
+  if (type !== 4) {
+    return
+  }
+  const userId = data.creator_id
+  if (db[userId] && !db[userId].finishedFirstTimeWizard) {
+    return
+  }
+  const groupId = data.group_id
+  if (data.text && data.text.trim() !== '' && data.text.trim().endsWith('?')) {
     axios.request({
       url: `https://westus.api.cognitive.microsoft.com/qnamaker/v2.0/knowledgebases/${process.env.MS_QNA_KB_ID}/generateAnswer`,
       method: 'post',
