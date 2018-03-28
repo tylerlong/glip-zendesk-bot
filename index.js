@@ -107,30 +107,6 @@ const firstTimeLicenser = (type, data) => {
 
 client.on('message', firstTimeLicenser)
 
-// Zendesk search API
-// client.on('message', (type, data) => {
-//   if (finishedFirstTimeWizard && type === 4 && data.text.trim() !== '' && data.text.trim().endsWith('?')) {
-//     axios.request({
-//       url: `https://glip.zendesk.com/api/v2/search.json`,
-//       method: 'get',
-//       auth: {
-//         username: process.env.ZENDESK_USERNAME,
-//         password: process.env.ZENDESK_PASSWORD
-//       },
-//       params: {
-//         query: data.text.trim()
-//       }
-//     }).then(r => {
-//       console.log(r.data)
-//       if (r.data.results && r.data.results.length > 0) {
-//         client.post(groupId, `${striptags(r.data.results[0].body)}\n\n${r.data.results[0].html_url}`)
-//       } else {
-//         client.post(groupId, 'No result was found.')
-//       }
-//     })
-//   }
-// })
-
 // Microsoft QnA Maker
 client.on('message', (type, data) => {
   if (finishedFirstTimeWizard && type === 4 && data.text.trim() !== '' && data.text.trim().endsWith('?')) {
@@ -147,31 +123,13 @@ client.on('message', (type, data) => {
     }).then(r => {
       if (r.data.answers && r.data.answers.length > 0 && r.data.answers[0].score > 50) {
         const answer = r.data.answers[0]
-        client.post(groupId, `I find the following FAQ from my knowledge base:
-Q: ${answer.questions[0]}
-A: ${answer.answer}`)
+        client.post(groupId, `I find the following article from my knowledge base:
+Title: ${answer.questions[0]}
+Body: ${answer.answer}`)
       } else {
         client.post(groupId, 'I am sorry but this question is not in my knowledge base')
       }
     })
-    // axios.request({
-    //   url: `https://glip.zendesk.com/api/v2/search.json`,
-    //   method: 'get',
-    //   auth: {
-    //     username: process.env.ZENDESK_USERNAME,
-    //     password: process.env.ZENDESK_PASSWORD
-    //   },
-    //   params: {
-    //     query: data.text.trim()
-    //   }
-    // }).then(r => {
-    //   console.log(r.data)
-    //   if (r.data.results && r.data.results.length > 0) {
-    //     client.post(groupId, `${striptags(r.data.results[0].body)}\n\n${r.data.results[0].html_url}`)
-    //   } else {
-    //     client.post(groupId, 'No result was found.')
-    //   }
-    // })
   }
 })
 
