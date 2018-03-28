@@ -124,8 +124,10 @@ client.on('message', (type, data) => {
       if (r.data.answers && r.data.answers.length > 0 && r.data.answers[0].score > 50) {
         const answer = r.data.answers[0]
         client.post(groupId, `I find the following article from my knowledge base:
-Title: ${answer.questions[0]}
-Body: ${answer.answer}`)
+
+**${answer.questions[0]}**
+
+${answer.answer}`)
       } else {
         client.post(groupId, 'I am sorry but this question is not in my knowledge base')
       }
