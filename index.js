@@ -139,7 +139,7 @@ client.on('message', (type, data) => {
         question: data.text.trim()
       }
     }).then(r => {
-      if (r.data.answers && r.data.answers.length > 0 && r.data.answers[0].score > 50) {
+      if (r.data.answers && r.data.answers.length > 0 && r.data.answers[0].score > 20) {
         const answer = r.data.answers[0]
         client.post(groupId, `I find the following article from my knowledge base:
 
