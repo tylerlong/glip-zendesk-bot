@@ -1,6 +1,7 @@
 const dotenv = require('dotenv')
 const axios = require('axios')
 const striptags = require('striptags')
+const R = require('ramda')
 
 dotenv.config()
 
@@ -142,9 +143,8 @@ client.on('message', (type, data) => {
         const answer = r.data.answers[0]
         client.post(groupId, `I find the following article from my knowledge base:
 
-**${answer.questions[0]}**
-
-${answer.answer}`)
+**[${answer.questions[0]}](${R.last(answer.answer.split(/\s+/g))})**
+`)
       } else {
         client.post(groupId, 'I am sorry but this question is not in my knowledge base')
       }
