@@ -140,10 +140,14 @@ client.on('message', (type, data) => {
       }
     }).then(r => {
       if (r.data.answers && r.data.answers.length > 0 && r.data.answers[0].score > 20) {
-        const answer = r.data.answers[0]
+        const answers = R.pipe(
+          R.filter(a => a.score > 20),
+          R.take(2),
+          R.map(a => `* [${a.questions[0]}](${R.last(a.answer.split(/\s+/g))})`)
+        )(r.data.answers)
         client.post(groupId, `I find the following article from my knowledge base:
 
-**[${answer.questions[0]}](${R.last(answer.answer.split(/\s+/g))})**
+${answers.join('\n')}
 `)
       } else {
         client.post(groupId, 'I am sorry but this question is not in my knowledge base')
