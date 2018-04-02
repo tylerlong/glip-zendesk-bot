@@ -32,7 +32,8 @@ const postWelcomeMessage = (userId) => {
       password: process.env.ZENDESK_PASSWORD
     }
   }).then(r => {
-    client.post(db[userId].groupId, striptags(r.data.article.body))
+    // client.post(db[userId].groupId, striptags(r.data.article.body))
+    client.post(db[userId].groupId, 'Welcome to Glip OnBoarding Wizard!')
   })
 }
 
@@ -107,10 +108,61 @@ const firstTimeLicenser = (type, data) => {
     client.post(db[userId].groupId, 'Well done!')
     db[userId].waitingForCompleteTask = false
     setTimeout(() => {
+      client.post(db[userId].groupId, 'Now it\'s your turn, please create a task for me and post it to this conversation')
+      db[userId].waitingForCreatingTask = true
+    }, 5000)
+  }
+  if (type === 9 && db[data.creator_id] && db[data.creator_id].waitingForCreatingTask) {
+    const taskId = data._id
+    const userId = data.creator_id
+    client.request(
+      `/api/task/${taskId}`,
+      'PUT',
+      {
+        complete_boolean: 1
+      },
+      (error, data) => {
+        console.warn(error, data)
+        console.log(JSON.stringify(data, null, 2))
+      }
+    )
+    setTimeout(() => {
+      client.post(db[userId].groupId, 'I\'ve seen the task you created for me and I\'ve marked it as complete!')
+    }, 5000)
+    setTimeout(() => {
       client.post(db[userId].groupId, 'You can upload files/images, like this:')
       client.post_file_from_url(db[userId].groupId, process.env.SAMPLE_FILE_URL, 'Hey, look at this cool icon!')
+
+      setTimeout(() => {
+        client.post(db[userId].groupId, 'Now it\'s your turn. Please upload a document to this conversation')
+        db[userId].waitingForUploading = true
+      }, 5000)
+    }, 10000)
+  }
+  if (type === 4 && db[data.creator_id] && db[data.creator_id].waitingForUploading && data.item_ids.length > 0) {
+    const userId = data.creator_id
+    setTimeout(() => {
+      client.request(
+        `/api/post`,
+        'POST',
+        {
+          text: 'This is a nice document!',
+          group_id: db[userId].groupId,
+          at_mention_item_ids: data.item_ids,
+          parent_id: data.item_ids[0]
+        },
+        (error, data) => {
+          console.warn(error, data)
+          console.log(JSON.stringify(data, null, 2))
+        }
+      )
+
       client.removeListener('message', firstTimeLicenser)
       db[userId].finishedFirstTimeWizard = true
+
+      setTimeout(() => {
+        client.post(db[userId].groupId, 'Congratulations! You have completed the onboarding widzard!')
+      }, 5000)
     }, 5000)
   }
 }
