@@ -179,7 +179,14 @@ client.on('message', (type, data) => {
     return
   }
   const groupId = data.group_id
-  if (data.text && data.text.trim() !== '' && data.text.trim().endsWith('?')) {
+  if (data.text && data.text.trim() !== '') {
+    if (data.text.indexOf("<a class='at_mention_compose'") === -1) {
+      return
+    }
+    if (data.text.indexOf(`>@${process.env.GLIP_NAME}</a>`) === -1) {
+      return
+    }
+    const text = striptags(data.text).replace(`@${process.env.GLIP_NAME}`, ' ').trim().replace(/\s+/g, ' ')
     axios.request({
       url: `https://westus.api.cognitive.microsoft.com/qnamaker/v2.0/knowledgebases/${process.env.MS_QNA_KB_ID}/generateAnswer`,
       method: 'post',
@@ -188,7 +195,7 @@ client.on('message', (type, data) => {
         'Ocp-Apim-Subscription-Key': process.env.MS_QNA_SUB_KEY
       },
       data: {
-        question: data.text.trim()
+        question: text
       }
     }).then(r => {
       if (r.data.answers && r.data.answers.length > 0 && r.data.answers[0].score > 20) {
