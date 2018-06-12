@@ -131,7 +131,7 @@ const firstTimeLicenser = (type, data) => {
     }, 5000)
     setTimeout(() => {
       client.post(db[userId].groupId, 'You can upload files/images, like this:')
-      client.post_file_from_url(db[userId].groupId, process.env.SAMPLE_FILE_URL, 'Hey, look at this cool icon!')
+      client.post(db[userId].groupId, 'Hey, look at this cool icon!', [162826846218])
 
       setTimeout(() => {
         client.post(db[userId].groupId, 'Now it\'s your turn. Please upload a document to this conversation')
