@@ -130,11 +130,11 @@ const firstTimeLicenser = (type, data) => {
       client.post(db[userId].groupId, 'I\'ve seen the task you created for me and I\'ve marked it as complete!')
     }, 5000)
     setTimeout(() => {
-      client.post(db[userId].groupId, 'You can upload files/images, like this:')
+      // client.post(db[userId].groupId, 'You can upload files/images, like this:')
 
-      setTimeout(() => {
+      // setTimeout(() => {
         client.post(db[userId].groupId, 'Hey, look at this cool icon!', [162826846218])
-      }, 1000)
+      // }, 1000)
 
       setTimeout(() => {
         client.post(db[userId].groupId, 'Now it\'s your turn. Please upload a document to this conversation')
