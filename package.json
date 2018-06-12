@@ -5,7 +5,7 @@
   "license": "All right reserved",
   "scripts": {
     "test": "node index.js",
-    "upgrade": "yarn-upgrade-all && yarn remove glip.socket.io && cp -r ../glip.socket.io node_modules/"
+    "upgrade": "yarn-upgrade-all && cp -r ../glip.socket.io node_modules/"
   },
   "devDependencies": {
     "standard": "^11.0.1",
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
-    "dotenv": "^5.0.1",
+    "dotenv": "^6.0.0",
     "ramda": "^0.25.0",
     "striptags": "^3.1.1"
   }
